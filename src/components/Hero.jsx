@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "./Button";
 import { TiLocationArrow } from "react-icons/ti";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/all";
+
+gsap.registerPlugin(ScrollTrigger);
 
 function Hero() {
   const [currIndex, setCurrIndex] = useState(1);
@@ -21,6 +26,54 @@ function Hero() {
 
   const getVideoSrc = (index) => `videos/hero-${index}.mp4`;
 
+  // Zoom in on click animation
+  useGSAP(
+    () => {
+      if (hasClicked) {
+        // Make #next-video visible immediately
+        gsap.set("#next-video", { visibility: "visible" });
+
+        // Animate #next-video to full size
+        gsap.to("#next-video", {
+          transformOrigin: "center center",
+          scale: 1,
+          width: "100%",
+          height: "100%",
+          duration: 1,
+          ease: "power1.inOut",
+          onStart: () => nextVideoRef.current.play(),
+        });
+
+        // Animate #current-video disappearing
+        gsap.from("#current-video", {
+          transformOrigin: "center center",
+          scale: 0,
+          duration: 1.5,
+          ease: "power1.inOut",
+        });
+      }
+    },
+    { dependencies: [currIndex], revertOnUpdate: true }
+  );
+
+  useGSAP(() => {
+    gsap.set("#video-frame", {
+      clipPath: "polygon(14% 0, 72% 0, 88% 90%, 0 95%)",
+      borderRadius: "0% 0% 40% 10%",
+    });
+    gsap.from("#video-frame", {
+      clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+      borderRadius: "0% 0% 0% 0%",
+      ease: "power1.inOut",
+      scrollTrigger: {
+        trigger: "#video-frame",
+        start: "center center",
+        end: "bottom center",
+        scrub: true,
+      },
+    });
+  });
+
   useEffect(() => {
     if (loadedVideos === totalVideos - 1) {
       setIsLoading(false);
@@ -29,6 +82,16 @@ function Hero() {
 
   return (
     <div className="relative h-dvh w-screen overflow-x-hidden">
+      {isLoading && (
+        <div className="flex-center absolute z-[100] h-dvh w-screen overflow-hidden bg-violet-50">
+          <div className="three-body">
+            <div className="three-body__dot"></div>
+            <div className="three-body__dot"></div>
+            <div className="three-body__dot"></div>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 h-dvh w-screen overflow-hidden bg-violet-50">
         <div
           id="video-frame"
@@ -52,52 +115,57 @@ function Hero() {
                 />
               </div>
             </div>
-          </div>
 
-          {/* For zoom in effect */}
-          <video
-            ref={nextVideoRef}
-            src={getVideoSrc(currIndex)}
-            loop
-            muted
-            id="next-video"
-            className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
-            onLoadedData={handleVideoLoad}
-          />
+            {/* For zoom in effect */}
+            <video
+              ref={nextVideoRef}
+              src={getVideoSrc(currIndex)}
+              loop
+              muted
+              id="next-video"
+              className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
+              onLoadedData={handleVideoLoad}
+            />
 
-          {/* Background Video */}
-          <video
-            src={getVideoSrc(currIndex === totalVideos - 1 ? 1 : currIndex)}
-            autoPlay
-            loop
-            muted
-            className="absolute left-0 top-0 size-full object-cover object-center"
-            onLoadedData={handleVideoLoad}
-          />
-        </div>
-
-        {/* Top Heading */}
-        <div className="absolute top-0 left-0 z-40 size-full pointer-events-none">
-          <div className="mt-24 px-5 sm:px-10">
-            <h1 className="special-font hero-heading text-blue-100">
-              redefi<b>n</b>e
-            </h1>
-
-            <p className="mb-5 max-w-64 font-robert-regular text-blue-100">
-              Enter the Metagame Layer <br /> Unleash the Play Economy
-            </p>
-
-            <Button
-              id="watch-trailer"
-              title="Watch trailer"
-              leftIcon={<TiLocationArrow />}
-              containerClass="bg-yellow-300 flex-center gap-1"
+            {/* Background Video */}
+            <video
+              src={getVideoSrc(currIndex === totalVideos - 1 ? 1 : currIndex)}
+              autoPlay
+              loop
+              muted
+              className="absolute left-0 top-0 size-full object-cover object-center"
+              onLoadedData={handleVideoLoad}
             />
           </div>
+
+          {/* Top Heading */}
+          <div className="absolute top-0 left-0 z-40 size-full pointer-events-none">
+            {/* Bottom gaming text (front) */}
+            <h1 className="special-font hero-heading absolute bottom-5 right-5 z-40 text-blue-50">
+              G<b>A</b>MING
+            </h1>
+
+            <div className="mt-24 px-5 sm:px-10">
+              <h1 className="special-font hero-heading text-blue-50">
+                redefi<b>n</b>e
+              </h1>
+
+              <p className="mb-5 max-w-64 font-robert-regular text-blue-50">
+                Enter the Metagame Layer <br /> Unleash the Play Economy
+              </p>
+
+              <Button
+                id="watch-trailer"
+                title="Watch trailer"
+                leftIcon={<TiLocationArrow />}
+                containerClass="bg-yellow-300 flex-center gap-1"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Bottom gaming text */}
-        <h1 className="hero-heading special-font z-40 absolute bottom-5 right-5 text-blue-50 pointer-events-none">
+        {/* Bottom gaming text (behind) */}
+        <h1 className="hero-heading special-font absolute bottom-5 right-5 text-black pointer-events-none">
           G<b>a</b>ming
         </h1>
       </div>
